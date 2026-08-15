@@ -1,0 +1,94 @@
+﻿:root {
+  --primary: #1E40AF;
+  --secondary: #3B82F6;
+  --accent: #F59E0B;
+  --danger: #DC2626;
+  --bg: #F8FAFC;
+  --ink: #0F172A;
+}
+
+* { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+html, body { height: 100%; }
+body {
+  font-family: "Inter", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.font-num { font-family: "Fira Code", "Inter", monospace; font-variant-numeric: tabular-nums; }
+
+/* Scrollbars */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* Sidebar */
+.sidenav { background: linear-gradient(180deg, #0B1F4D 0%, #122A5E 55%, #0E2148 100%); }
+.nav-group-title { color: #8AA0CC; }
+.nav-item { color: #C7D5EE; transition: all .18s ease; }
+.nav-item:hover { background: rgba(255,255,255,.07); color: #fff; }
+.nav-item.active { background: rgba(59,130,246,.18); color: #fff; box-shadow: inset 3px 0 0 var(--secondary); }
+.nav-item.active .nav-icon { color: #93C5FD; }
+.nav-sub { max-height: 0; overflow: hidden; transition: max-height .28s ease; }
+.nav-group.open > .nav-sub { max-height: 1000px; }
+.nav-group.open > button > .nav-chev { transform: rotate(90deg); }
+.nav-chev { transition: transform .2s ease; }
+
+/* Cards */
+.card { background: #fff; border: 1px solid #EEF2F7; border-radius: 14px; box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 4px 16px rgba(15,23,42,.04); }
+.hover-rise { transition: transform .2s ease, box-shadow .2s ease; }
+.hover-rise:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(30,64,175,.12); }
+
+/* Buttons */
+.btn-primary { background: var(--primary); color: #fff; transition: all .18s ease; }
+.btn-primary:hover { background: #1B388F; box-shadow: 0 6px 18px rgba(30,64,175,.28); }
+.btn-ghost { color: #475569; transition: all .15s ease; }
+.btn-ghost:hover { background: #F1F5F9; color: var(--ink); }
+
+/* Inputs */
+.field { background: #fff; border: 1px solid #E2E8F0; border-radius: 10px; transition: all .15s ease; }
+.field:focus { border-color: var(--secondary); box-shadow: 0 0 0 3px rgba(59,130,246,.15); outline: none; }
+
+/* Animations */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.animate-fade-in { animation: fadeIn .3s ease both; }
+@keyframes pulseDot { 0%,100%{ opacity:1; } 50%{ opacity:.35; } }
+.pulse-dot { animation: pulseDot 1.6s ease-in-out infinite; }
+
+/* Login backdrop */
+.login-bg { background: radial-gradient(1200px 600px at 80% -10%, #1E40AF 0%, transparent 60%), radial-gradient(900px 500px at 10% 110%, #3B82F6 0%, transparent 55%), linear-gradient(135deg, #0B1F4D 0%, #122A5E 100%); }
+.grid-overlay { background-image: linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px); background-size: 36px 36px; }
+
+/* Tags */
+.tag { display:inline-flex; align-items:center; gap:.25rem; padding:.125rem .5rem; border-radius:999px; font-size:.7rem; font-weight:600; white-space:nowrap; }
+.tag-high { background:#FEE2E2; color:#B91C1C; }
+.tag-mid  { background:#FEF3C7; color:#B45309; }
+.tag-low  { background:#DBEAFE; color:#1E40AF; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+
+/* 侧边栏折叠态 */
+.sidenav.collapsed { width: 76px !important; }
+.sidenav.collapsed .menu-text,
+.sidenav.collapsed .logo-text,
+.sidenav.collapsed .nav-chev,
+.sidenav.collapsed .dot { display: none; }
+.sidenav.collapsed .nav-sub { display: none; }
+.sidenav.collapsed .nav-item { justify-content: center; padding-left: 0; padding-right: 0; }
+
+/* Clickable cursor */
+button:not(:disabled) { cursor: pointer; }
+
+
+/* ===== 紧凑布局 ===== */
+#view > div { padding: 1rem !important; }
+#view > div.space-y-4 { gap: 0.75rem !important; }
+#view .card { border-radius: 10px !important; }
+#view .card.p-4 { padding: 0.75rem !important; }
+#view table th { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
+#view table td { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
+#view .border-t.border-slate-100 { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }

@@ -1,0 +1,146 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>长久保存系统 · 登录</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/css/app.css" />
+<script>
+tailwind.config = { theme: { extend: {
+  colors: { primary: "#1E40AF", secondary: "#3B82F6", accent: "#F59E0B", ink: "#0F172A" },
+  fontFamily: { sans: ['Inter','PingFang SC','Microsoft YaHei','sans-serif'], num: ['Fira Code','monospace'] }
+}}}
+</script>
+</head>
+<body class="h-screen w-screen overflow-hidden">
+<div class="flex h-full">
+
+  <!-- 左侧品牌区 -->
+  <aside class="login-bg relative hidden lg:flex flex-col w-[58%] px-16 py-12 text-white overflow-hidden">
+    <div class="grid-overlay absolute inset-0 opacity-60"></div>
+    <div class="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-secondary/20 blur-3xl"></div>
+    <div class="absolute -bottom-32 -left-20 w-[28rem] h-[28rem] rounded-full bg-primary/30 blur-3xl"></div>
+
+    <!-- Logo -->
+    <div class="relative flex items-center gap-3">
+      <div class="w-11 h-11 rounded-xl bg-white/10 border border-white/20 backdrop-blur flex items-center justify-center">
+        <i data-lucide="shield-check" class="w-6 h-6 text-accent"></i>
+      </div>
+      <div>
+        <div class="text-lg font-semibold tracking-wide">光典数据保全平台</div>
+        <div class="text-xs text-blue-200/70">Long-term Preservation System</div>
+      </div>
+    </div>
+
+    <!-- 主标语 -->
+    <div class="relative my-auto">
+      <h1 class="text-[2.7rem] leading-tight font-bold tracking-tight">
+        守护数字资产<br/>
+        <span class="text-accent">长久 · 可信 · 可溯</span>
+      </h1>
+      <p class="mt-5 text-blue-100/80 max-w-md leading-relaxed">
+        面向档案与电子文件的长久保存系统，覆盖接收、封装、保存、备份、恢复、检测与溯源全生命周期，保障数字资源真实、完整与长期可用。
+      </p>
+
+      <!-- 特性 -->
+      <div class="mt-10 grid grid-cols-3 gap-4 max-w-lg">
+        <div class="rounded-xl bg-white/5 border border-white/10 p-4 backdrop-blur">
+          <i data-lucide="archive" class="w-5 h-5 text-accent mb-2"></i>
+          <div class="text-sm font-medium">长期保存</div>
+          <div class="text-xs text-blue-200/60 mt-0.5">多载体冗余</div>
+        </div>
+        <div class="rounded-xl bg-white/5 border border-white/10 p-4 backdrop-blur">
+          <i data-lucide="git-branch" class="w-5 h-5 text-accent mb-2"></i>
+          <div class="text-sm font-medium">完整溯源</div>
+          <div class="text-xs text-blue-200/60 mt-0.5">链路可验证</div>
+        </div>
+        <div class="rounded-xl bg-white/5 border border-white/10 p-4 backdrop-blur">
+          <i data-lucide="activity" class="w-5 h-5 text-accent mb-2"></i>
+          <div class="text-sm font-medium">智能检测</div>
+          <div class="text-xs text-blue-200/60 mt-0.5">预警巡检</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="relative text-xs text-blue-200/50">© 2024 光典数据保全系统 · 原型演示</div>
+  </aside>
+
+  <!-- 右侧表单区 -->
+  <main class="flex-1 flex items-center justify-center bg-[#F8FAFC] px-6">
+    <div class="w-full max-w-sm animate-fade-in">
+      <div class="lg:hidden flex items-center gap-2 mb-8 justify-center">
+        <div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
+          <i data-lucide="shield-check" class="w-5 h-5 text-white"></i>
+        </div>
+        <span class="font-semibold text-ink">长久保存系统</span>
+      </div>
+
+      <h2 class="text-2xl font-bold text-ink">欢迎回来</h2>
+      <p class="text-sm text-slate-500 mt-1.5">请登录以进入长久保存系统控制台</p>
+
+      <form class="mt-8 space-y-5" onsubmit="return doLogin(event)">
+        <div>
+          <label class="block text-sm font-medium text-slate-600 mb-1.5">用户名</label>
+          <div class="relative">
+            <i data-lucide="user" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+            <input id="username" type="text" value="baoquan" class="field w-full pl-10 pr-3 py-2.5 text-sm" placeholder="请输入用户名" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-600 mb-1.5">密码</label>
+          <div class="relative">
+            <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+            <input id="password" type="password" value="000000" class="field w-full pl-10 pr-10 py-2.5 text-sm" placeholder="请输入密码" />
+            <button type="button" onclick="togglePwd()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+              <i data-lucide="eye" id="eyeIcon" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between text-sm">
+          <label class="flex items-center gap-2 text-slate-600 cursor-pointer select-none">
+            <input type="checkbox" checked class="rounded border-slate-300 text-primary focus:ring-primary" />
+            记住我
+          </label>
+          <a href="#" class="text-secondary hover:underline">忘记密码？</a>
+        </div>
+
+        <button type="submit" class="btn-primary w-full py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2">
+          登 录
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </button>
+
+        <div class="text-xs text-slate-400 text-center bg-slate-50 border border-slate-100 rounded-lg py-2">
+          演示账号：<span class="font-num text-slate-600">baoquan</span> / <span class="font-num text-slate-600">000000</span>
+        </div>
+      </form>
+    </div>
+  </main>
+</div>
+
+<script>
+function togglePwd(){
+  const p = document.getElementById("password");
+  const icon = document.getElementById("eyeIcon");
+  if (p.type === "password"){ p.type = "text"; icon.setAttribute("data-lucide","eye-off"); }
+  else { p.type = "password"; icon.setAttribute("data-lucide","eye"); }
+  lucide.createIcons();
+}
+function doLogin(e){
+  e.preventDefault();
+  const u = document.getElementById("username").value.trim();
+  const p = document.getElementById("password").value.trim();
+  if (!u || !p){ return false; }
+  sessionStorage.setItem("pps_user", u);
+  location.href = "index.html";
+  return false;
+}
+lucide.createIcons();
+</script>
+</body>
+</html>

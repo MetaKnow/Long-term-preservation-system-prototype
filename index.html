@@ -1,0 +1,95 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>长久保存系统</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/css/app.css" />
+<script>
+tailwind.config = { theme: { extend: {
+  colors: { primary: "#1E40AF", secondary: "#3B82F6", accent: "#F59E0B", ink: "#0F172A" },
+  fontFamily: { sans: ['Inter','PingFang SC','Microsoft YaHei','sans-serif'], num: ['Fira Code','monospace'] }
+}}}
+</script>
+</head>
+<body class="h-screen overflow-hidden">
+<div class="flex h-full">
+
+  <!-- 侧边栏 -->
+  <aside id="sidenav" class="sidenav flex flex-col w-60 shrink-0 transition-all duration-200">
+    <!-- Logo -->
+    <div class="h-16 flex items-center gap-2.5 px-5 border-b border-white/10">
+      <div class="w-9 h-9 rounded-lg bg-white/10 border border-white/15 flex items-center justify-center shrink-0">
+        <i data-lucide="shield-check" class="w-5 h-5 text-accent"></i>
+      </div>
+      <div class="logo-text overflow-hidden">
+        <div class="text-sm font-semibold text-white whitespace-nowrap">长久保存系统</div>
+        <div class="text-[10px] text-blue-200/60 whitespace-nowrap">Preservation Console</div>
+      </div>
+    </div>
+
+    <!-- 菜单 -->
+    <nav id="menu" class="flex-1 overflow-y-auto py-3 px-2.5"></nav>
+
+    <!-- 折叠按钮 -->
+    <div class="h-12 border-t border-white/10 flex items-center px-2.5">
+      <button id="collapseBtn" class="nav-item w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm">
+        <i data-lucide="panel-left-close" id="collapseIcon" class="w-4 h-4 nav-icon shrink-0"></i>
+        <span class="logo-text text-xs">收起菜单</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- 主区 -->
+  <div class="flex-1 flex flex-col min-w-0">
+    <!-- 顶栏 -->
+    <header class="h-16 bg-white border-b border-slate-100 flex items-center gap-4 px-6 shrink-0">
+      <div class="min-w-0">
+        <h1 id="pageTitle" class="text-base font-semibold text-ink truncate">工作台</h1>
+        <div id="breadcrumb" class="text-xs text-slate-400 truncate">首页 / 工作台</div>
+      </div>
+      <div class="ml-auto flex items-center gap-2">
+        <div class="relative hidden md:block">
+          <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+          <input class="field pl-9 pr-3 py-1.5 text-sm w-56" placeholder="搜索功能、档案…" />
+        </div>
+        <button class="btn-ghost w-9 h-9 rounded-lg flex items-center justify-center relative">
+          <i data-lucide="bell" class="w-[18px] h-[18px]"></i>
+          <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-accent rounded-full pulse-dot"></span>
+        </button>
+        <button class="btn-ghost w-9 h-9 rounded-lg flex items-center justify-center">
+          <i data-lucide="settings" class="w-[18px] h-[18px]"></i>
+        </button>
+        <div class="w-px h-6 bg-slate-200 mx-1"></div>
+        <div class="flex items-center gap-2.5 pl-1">
+          <div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-secondary text-white text-xs font-semibold flex items-center justify-center">保</div>
+          <div class="hidden sm:block leading-tight">
+            <div class="text-sm font-medium text-ink" id="userName">保全管理员</div>
+            <div class="text-[11px] text-slate-400" id="userRole">管理员 · 保管科</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- 内容视图 -->
+    <main id="view" class="flex-1 overflow-y-auto"></main>
+  </div>
+</div>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/reception.js"></script>
+<script src="assets/js/encapsulation.js"></script>
+<script src="assets/js/preserve.js"></script>
+<script src="assets/js/security.js"></script>
+<script src="assets/js/stats.js"></script>
+<script src="assets/js/settings.js"></script>
+<script src="assets/js/system_config.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>
