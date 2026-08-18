@@ -1,343 +1,302 @@
 /* ===== 数据统计 ===== */
 
-const STATS_YEAR = 2026;
-const STATS_MODE = "month";
-
-/* 馆藏文件容量 - 各年度数据 */
-const COLLECTION_YEARS = [
-  { year: 2024, size: 0, unit: "B" },
-  { year: 2025, size: 0, unit: "B" },
-  { year: 2026, size: 15.24, unit: "GB" }
-];
-
-/* 馆藏文件容量 - 月度数据 (GB) */
-const COLLECTION_MONTHLY = [
-  { month: 1, value: 0 }, { month: 2, value: 0.12 }, { month: 3, value: 0.45 },
-  { month: 4, value: 1.2 }, { month: 5, value: 3.8 }, { month: 6, value: 6.5 },
-  { month: 7, value: 9.2 }, { month: 8, value: 15.24 }
-];
-
-/* 馆藏文件容量 - 季度数据 (GB) */
-const COLLECTION_QUARTERLY = [
-  { q: "Q1", value: 0.57 }, { q: "Q2", value: 11.5 }, { q: "Q3", value: 24.44 }, { q: "Q4", value: 0 }
-];
-
-/* ISO包容量 - 年度数据 (GB) */
-const ISO_YEARLY = [
-  { year: 2022, value: 0.5 }, { year: 2023, value: 1.2 }, { year: 2024, value: 2.8 },
-  { year: 2025, value: 4.5 }, { year: 2026, value: 12.8 }
-];
-
-/* ISO包容量 - 季度数据 (GB) */
-const ISO_QUARTERLY = [
-  { q: "Q1", value: 1.2 }, { q: "Q2", value: 3.5 }, { q: "Q3", value: 8.1 }, { q: "Q4", value: 0 }
-];
-
-/* ISO包容量 - 月度数据 (GB) */
-const ISO_MONTHLY = [
-  { month: 1, value: 0.3 }, { month: 2, value: 0.4 }, { month: 3, value: 0.5 },
-  { month: 4, value: 0.9 }, { month: 5, value: 1.4 }, { month: 6, value: 1.2 },
-  { month: 7, value: 3.2 }, { month: 8, value: 5.3 }
-];
-
-/* 恢复包统计 (GB) */
-const RESTORE_MONTHLY = [
-  { month: 1, value: 0 }, { month: 2, value: 0.12 }, { month: 3, value: 0.08 },
-  { month: 4, value: 0.25 }, { month: 5, value: 0.42 }, { month: 6, value: 0.38 },
-  { month: 7, value: 0.65 }, { month: 8, value: 0.9 }
-];
-
-/* 备份包统计 */
-const BACKUP_YEARS = [
-  { year: 2026, items: [{ name: "硬盘备份", value: 3, total: 10 }] },
-  { year: 2025, items: [{ name: "硬盘备份", value: 0, total: 5 }] },
-  { year: 2024, items: [{ name: "硬盘备份", value: 0, total: 5 }] },
-  { year: 2023, items: [{ name: "硬盘备份", value: 0, total: 5 }] },
-];
-
-let statsState = {
-  collectionYear: 2026,
-  collectionMode: "month",
-  isoMode: "year",
-  isoType: "archive",
-};
-
 let statsCharts = {};
 
-function statsHTML() {
+/* 统计 KPI 卡片（工作台与数据统计共用） */
+function kpiCardsHTML() {
+  const T = {
+    primary: "bg-primary/10 text-primary",
+    secondary: "bg-secondary/10 text-secondary",
+    accent: "bg-accent/10 text-accent",
+    danger: "bg-red-50 text-red-600",
+  };
   return `
-  <div class="p-6 space-y-5 animate-fade-in">
-    <div class="grid grid-cols-12 gap-5">
+  <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+    ${KPI.map(k => `
+    <div class="card hover-rise p-5">
+      <div class="flex items-start justify-between">
+        <div class="w-10 h-10 rounded-xl ${T[k.tone]} flex items-center justify-center">
+          <i data-lucide="${k.icon}" class="w-5 h-5"></i>
+        </div>
+        <span class="text-xs font-medium ${k.up?"text-emerald-600":"text-red-500"} flex items-center gap-0.5">
+          <i data-lucide="${k.up?"trending-up":"trending-down"}" class="w-3.5 h-3.5"></i>${k.delta}
+        </span>
+      </div>
+      <div class="mt-4">
+        <div class="text-2xl font-bold text-ink font-num">${k.value}<span class="text-sm font-normal text-slate-400 ml-1">${k.unit}</span></div>
+        <div class="text-sm text-slate-500 mt-1">${k.label}</div>
+      </div>
+    </div>`).join("")}
+  </div>`;
+}
 
-      <!-- 馆藏文件容量统计 -->
-      <div class="card overflow-hidden col-span-12 xl:col-span-8">
-        ${chartHeaderHTML("馆藏文件容量统计", "hard-drive")}
-        <div class="px-4 pb-4 pt-2">
-          <div class="grid grid-cols-2 gap-6 items-center">
-            <div class="flex items-end justify-around gap-4 pt-6 pb-4">
-              ${COLLECTION_YEARS.map(y => `
-                <div class="flex flex-col items-center gap-2">
-                  <div class="text-xs text-slate-500 font-medium">${y.year}</div>
-                  <div class="relative w-24 h-28">
-                    <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-20 rounded-t-full bg-gradient-to-b from-secondary/30 to-primary/20 border-2 border-primary/30 flex items-start justify-center pt-2 overflow-hidden">
-                      <div class="text-xs font-semibold text-primary font-num">${y.size} ${y.unit}</div>
-                    </div>
-                    <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-24 h-4 rounded-full bg-gradient-to-b from-primary/20 to-transparent"></div>
-                    <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-28 h-1.5 rounded-full bg-slate-200/60"></div>
-                  </div>
-                </div>
-              `).join("")}
-            </div>
-            <div class="flex flex-col gap-3">
-              <div class="flex items-center justify-end gap-2">
-                <select id="collYear" class="field px-3 py-1.5 text-xs w-24" onchange="statsState.collectionYear=parseInt(this.value); renderCollectionChart()">
-                  <option value="2026" ${statsState.collectionYear===2026?'selected':''}>2026</option>
-                  <option value="2025" ${statsState.collectionYear===2025?'selected':''}>2025</option>
-                  <option value="2024" ${statsState.collectionYear===2024?'selected':''}>2024</option>
-                </select>
-                <div class="flex bg-slate-100 rounded-lg p-0.5">
-                  <button onclick="setCollMode('month')" class="px-3 py-1 rounded-md text-xs transition-colors ${statsState.collectionMode==='month'?'bg-white text-primary font-medium shadow-sm':'text-slate-600'}">按月</button>
-                  <button onclick="setCollMode('quarter')" class="px-3 py-1 rounded-md text-xs transition-colors ${statsState.collectionMode==='quarter'?'bg-white text-primary font-medium shadow-sm':'text-slate-600'}">按季</button>
-                </div>
-              </div>
-              <div class="h-48">
-                <canvas id="collChart"></canvas>
-              </div>
-            </div>
+/* 统计图表卡片（保存趋势 / 档案门类分布，工作台与数据统计共用；withExport 控制是否显示导出按钮） */
+function statsChartsCardsHTML(withExport) {
+  return `
+  <div class="grid grid-cols-12 gap-5">
+    <div class="card overflow-hidden col-span-12 xl:col-span-8">
+      ${chartHeaderHTML("保存趋势", "trending-up", withExport ? "exportTrendExcel" : "")}
+      <div class="px-4 pb-4 pt-2">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs text-slate-400">近 12 个月信息包数量与存储量</span>
+          <div class="flex gap-1">
+            <button class="btn-ghost stats-mode-btn px-2.5 py-1 rounded-md text-xs bg-slate-100 text-ink" data-mode="count" onclick="setStatsMode('count', this)">信息包数量</button>
+            <button class="btn-ghost stats-mode-btn px-2.5 py-1 rounded-md text-xs text-slate-500" data-mode="storage" onclick="setStatsMode('storage', this)">存储量</button>
           </div>
         </div>
+        <div class="h-56"><canvas id="trendChart"></canvas></div>
       </div>
-
-      <!-- 备份包统计 -->
-      <div class="card overflow-hidden col-span-12 xl:col-span-4">
-        ${chartHeaderHTML("备份包统计", "save")}
-        <div class="px-4 pb-4 space-y-2.5">
-          ${BACKUP_YEARS.map(y => `
-            <div class="rounded-xl bg-gradient-to-br from-slate-50 to-blue-50/40 border border-slate-100 p-4">
-              <div class="text-sm font-semibold text-primary mb-3 font-num">${y.year}</div>
-              ${y.items.map(it => {
-                const pct = y.total ? Math.round(it.value / y.total * 100) : 0;
-                return `
-                <div class="space-y-1.5">
-                  <div class="flex items-center justify-between text-xs">
-                    <span class="text-slate-600">${it.name}</span>
-                    <span class="font-num text-slate-500">${it.value}</span>
-                  </div>
-                  <div class="h-2 bg-white rounded-full border border-slate-200/80 overflow-hidden">
-                    <div class="h-full bg-gradient-to-r from-primary to-secondary rounded-full" style="width:${pct}%"></div>
-                  </div>
-                </div>`;
-              }).join("")}
-            </div>
-          `).join("")}
-        </div>
-      </div>
-
-      <!-- iso包容量统计 -->
-      <div class="card overflow-hidden col-span-12 md:col-span-6 xl:col-span-4">
-        ${chartHeaderHTML("ISO包容量统计", "disc")}
-        <div class="px-4 pb-4 pt-2">
-          <div class="flex items-center justify-between mb-3">
-            <select id="isoType" class="field px-3 py-1.5 text-xs w-24" onchange="statsState.isoType=this.value; renderIsoChart()">
-              <option value="archive" ${statsState.isoType==='archive'?'selected':''}>馆藏</option>
-              <option value="digital" ${statsState.isoType==='digital'?'selected':''}>数字馆</option>
-            </select>
-            <div class="flex bg-slate-100 rounded-lg p-0.5">
-              <button onclick="setIsoMode('year')" class="px-3 py-1 rounded-md text-xs transition-colors ${statsState.isoMode==='year'?'bg-white text-primary font-medium shadow-sm':'text-slate-600'}">按年</button>
-              <button onclick="setIsoMode('quarter')" class="px-3 py-1 rounded-md text-xs transition-colors ${statsState.isoMode==='quarter'?'bg-white text-primary font-medium shadow-sm':'text-slate-600'}">按季</button>
-              <button onclick="setIsoMode('month')" class="px-3 py-1 rounded-md text-xs transition-colors ${statsState.isoMode==='month'?'bg-white text-primary font-medium shadow-sm':'text-slate-600'}">按月</button>
-            </div>
-          </div>
-          <div class="h-48">
-            <canvas id="isoChart"></canvas>
+    </div>
+    <div class="card overflow-hidden col-span-12 md:col-span-6 xl:col-span-4">
+      ${chartHeaderHTML("档案门类分布", "pie-chart", withExport ? "exportDistExcel" : "")}
+      <div class="px-4 pb-4 pt-2">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs text-slate-400">按档案门类统计</span>
+          <div class="flex gap-1">
+            <button class="btn-ghost stats-mode-btn px-2.5 py-1 rounded-md text-xs bg-slate-100 text-ink" data-mode="count" onclick="setStatsMode('count', this)">信息包数量</button>
+            <button class="btn-ghost stats-mode-btn px-2.5 py-1 rounded-md text-xs text-slate-500" data-mode="storage" onclick="setStatsMode('storage', this)">存储量</button>
           </div>
         </div>
+        <div class="h-56"><canvas id="distChart"></canvas></div>
       </div>
-
-      <!-- 恢复包统计 -->
-      <div class="card overflow-hidden col-span-12 md:col-span-6 xl:col-span-4">
-        ${chartHeaderHTML("恢复包统计", "rotate-ccw")}
-        <div class="px-4 pb-4 pt-2">
-          <div class="h-52">
-            <canvas id="restoreChart"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <!-- 空列占位 (保持grid平衡，3列布局) -->
-      <div class="hidden xl:block xl:col-span-4"></div>
-
     </div>
   </div>`;
 }
 
-function chartHeaderHTML(title, icon) {
+function statsHTML() {
+  return `
+  <div class="p-6 space-y-5 animate-fade-in">
+    ${kpiCardsHTML()}
+    ${statsChartsCardsHTML(true)}
+
+    <div class="grid grid-cols-12 gap-5">
+      <div class="card overflow-hidden col-span-12 xl:col-span-8">
+        ${chartHeaderHTML("数据巡检统计", "search-check")}
+        <div class="px-4 pb-4 pt-2">
+          <div class="mb-3">
+            <span class="text-xs text-slate-400">各巡检模式的巡检次数与异常数量</span>
+          </div>
+          <div class="h-56"><canvas id="inspStatsChart"></canvas></div>
+        </div>
+      </div>
+      <div class="card overflow-hidden col-span-12 md:col-span-6 xl:col-span-4">
+        ${chartHeaderHTML("巡检状态分布", "activity")}
+        <div class="px-4 pb-4 pt-2">
+          <div class="h-56"><canvas id="inspStatusChart"></canvas></div>
+        </div>
+      </div>
+      <div class="card overflow-hidden col-span-12">
+        ${chartHeaderHTML("巡检数据量", "bar-chart-3")}
+        <div class="px-4 pb-4 pt-2">
+          <div class="mb-3">
+            <span class="text-xs text-slate-400">按档案门类统计应巡检、已巡检与异常的数据量</span>
+          </div>
+          <div class="h-56"><canvas id="inspVolChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function chartHeaderHTML(title, icon, exportFn) {
   return `
   <div class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100">
     <div class="flex items-center gap-2">
       <div class="w-1 h-4 rounded bg-primary"></div>
       <span class="text-sm font-semibold text-ink">${title}</span>
     </div>
-    <button onclick="refreshStats()" class="btn-ghost w-7 h-7 rounded-lg flex items-center justify-center"><i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-slate-400"></i></button>
+    <div class="flex items-center gap-1.5">
+      ${exportFn ? `<button onclick="${exportFn}()" class="btn-ghost px-2.5 py-1.5 rounded-lg text-xs flex items-center gap-1 border border-slate-200 text-slate-500 hover:text-ink"><i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>导出Excel</button>` : ""}
+      <button onclick="refreshStats()" class="btn-ghost w-7 h-7 rounded-lg flex items-center justify-center"><i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-slate-400"></i></button>
+    </div>
   </div>`;
-}
-
-function setCollMode(m) { statsState.collectionMode = m; renderCollectionChart(); }
-function setIsoMode(m) { statsState.isoMode = m; renderIsoChart(); }
-
-function renderCollectionChart() {
-  const ctx = document.getElementById("collChart");
-  if (!ctx) return;
-  if (statsCharts.coll) statsCharts.coll.destroy();
-  const data = statsState.collectionMode === "month" ? COLLECTION_MONTHLY : COLLECTION_QUARTERLY;
-  const labels = statsState.collectionMode === "month"
-    ? data.map(d => d.month + "月")
-    : data.map(d => d.q);
-  const values = data.map(d => d.value);
-  statsCharts.coll = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels,
-      datasets: [{
-        label: "容量 (GB)",
-        data: values,
-        borderColor: "#1E40AF",
-        backgroundColor: "rgba(59, 130, 246, 0.12)",
-        borderWidth: 2,
-        tension: 0.35,
-        fill: true,
-        pointRadius: 3,
-        pointBackgroundColor: "#fff",
-        pointBorderColor: "#1E40AF",
-        pointBorderWidth: 2,
-        pointHoverRadius: 5
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        y: {
-          beginAtZero: true,
-          grid: { color: "#F1F5F9" },
-          ticks: { font: { family: "Fira Code", size: 10 }, color: "#94A3B8" }
-        },
-        x: {
-          grid: { display: false },
-          ticks: { font: { family: "Fira Code", size: 10 }, color: "#94A3B8" }
-        }
-      }
-    }
-  });
-}
-
-function renderIsoChart() {
-  const ctx = document.getElementById("isoChart");
-  if (!ctx) return;
-  if (statsCharts.iso) statsCharts.iso.destroy();
-  let data, labels;
-  if (statsState.isoMode === "year") {
-    data = ISO_YEARLY;
-    labels = data.map(d => d.year);
-  } else if (statsState.isoMode === "quarter") {
-    data = ISO_QUARTERLY;
-    labels = data.map(d => d.q);
-  } else {
-    data = ISO_MONTHLY;
-    labels = data.map(d => d.month + "月");
-  }
-  const values = data.map(d => d.value);
-  statsCharts.iso = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels,
-      datasets: [{
-        label: "容量 (GB)",
-        data: values,
-        borderColor: "#10B981",
-        backgroundColor: "rgba(16, 185, 129, 0.12)",
-        borderWidth: 2,
-        tension: 0.35,
-        fill: true,
-        pointRadius: 3,
-        pointBackgroundColor: "#fff",
-        pointBorderColor: "#10B981",
-        pointBorderWidth: 2,
-        pointHoverRadius: 5
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        y: {
-          beginAtZero: true,
-          grid: { color: "#F1F5F9" },
-          ticks: { font: { family: "Fira Code", size: 10 }, color: "#94A3B8", callback: function(v){ return v + "G"; } }
-        },
-        x: {
-          grid: { display: false },
-          ticks: { font: { family: "Fira Code", size: 10 }, color: "#94A3B8" }
-        }
-      }
-    }
-  });
-}
-
-function renderRestoreChart() {
-  const ctx = document.getElementById("restoreChart");
-  if (!ctx) return;
-  if (statsCharts.restore) statsCharts.restore.destroy();
-  const labels = RESTORE_MONTHLY.map(d => d.month + "月");
-  const values = RESTORE_MONTHLY.map(d => d.value);
-  statsCharts.restore = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels,
-      datasets: [{
-        label: "容量 (GB)",
-        data: values,
-        borderColor: "#1E40AF",
-        backgroundColor: "rgba(30, 64, 175, 0.06)",
-        borderWidth: 2,
-        tension: 0.35,
-        fill: true,
-        pointRadius: 3,
-        pointBackgroundColor: "#fff",
-        pointBorderColor: "#1E40AF",
-        pointBorderWidth: 2,
-        pointHoverRadius: 5
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        y: {
-          beginAtZero: true,
-          grid: { color: "#F1F5F9" },
-          ticks: { font: { family: "Fira Code", size: 10 }, color: "#94A3B8" }
-        },
-        x: {
-          grid: { display: false },
-          ticks: { font: { family: "Fira Code", size: 10 }, color: "#94A3B8" }
-        }
-      }
-    }
-  });
 }
 
 function initStatsCharts() {
   Object.values(statsCharts).forEach(c => c && c.destroy && c.destroy());
   statsCharts = {};
-  renderCollectionChart();
-  renderIsoChart();
-  renderRestoreChart();
+  renderTrendChart();
+  renderDistChart();
+  renderInspStatsChart();
+  renderInspStatusChart();
+  renderInspVolChart();
+}
+
+/* ---- 数据巡检统计（数据来源：安全中心巡检记录） ---- */
+function inspStatsByMode() {
+  const modes = [["smart", "智能巡检"], ["manual", "手动巡检"], ["sample", "抽样巡检"]];
+  const records = (typeof INSPECTION_RECORDS !== "undefined") ? INSPECTION_RECORDS : [];
+  return modes.map(function(m) {
+    const rs = records.filter(function(r) { return r.checkType === m[0]; });
+    const abnormal = rs.reduce(function(s, r) { return s + (r.status === "running" ? 0 : (Number(r.abnormalCount) || 0)); }, 0);
+    return { label: m[1], count: rs.length, abnormal: abnormal };
+  });
+}
+
+function inspStatusDist() {
+  const records = (typeof INSPECTION_RECORDS !== "undefined") ? INSPECTION_RECORDS : [];
+  return [
+    { label: "巡检完成", value: records.filter(function(r) { return r.status === "done"; }).length, color: "#10B981" },
+    { label: "巡检中", value: records.filter(function(r) { return r.status === "running"; }).length, color: "#3B82F6" },
+    { label: "巡检停止", value: records.filter(function(r) { return r.status === "stop"; }).length, color: "#F59E0B" }
+  ];
+}
+
+function renderInspStatsChart() {
+  const ctx = document.getElementById("inspStatsChart");
+  if (!ctx) return;
+  if (statsCharts.insp) statsCharts.insp.destroy();
+  const data = inspStatsByMode();
+  statsCharts.insp = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: data.map(d => d.label),
+      datasets: [
+        { label: "巡检次数", data: data.map(d => d.count), backgroundColor: "rgba(30,64,175,.75)", borderRadius: 6, barPercentage: .55 },
+        { label: "异常数量", data: data.map(d => d.abnormal), backgroundColor: "rgba(220,38,38,.7)", borderRadius: 6, barPercentage: .55 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: "bottom", labels: { boxWidth: 10, usePointStyle: true } } },
+      scales: {
+        y: { beginAtZero: true, grid: { color: "#F1F5F9" }, ticks: { font: { family: "Fira Code", size: 10 }, color: "#94A3B8" } },
+        x: { grid: { display: false }, ticks: { font: { family: "Fira Code", size: 10 }, color: "#94A3B8" } }
+      }
+    }
+  });
+}
+
+function renderInspStatusChart() {
+  const ctx = document.getElementById("inspStatusChart");
+  if (!ctx) return;
+  if (statsCharts.inspStatus) statsCharts.inspStatus.destroy();
+  const data = inspStatusDist();
+  statsCharts.inspStatus = new Chart(ctx, {
+    type: "doughnut",
+    data: { labels: data.map(d => d.label), datasets: [{ data: data.map(d => d.value), backgroundColor: data.map(d => d.color), borderWidth: 0, hoverOffset: 6 }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: "68%", plugins: { legend: { position: "bottom", labels: { boxWidth: 10, usePointStyle: true, padding: 12 } } } }
+  });
+}
+
+/* 巡检数据量：按档案门类聚合应巡检 / 已巡检 / 异常数量 */
+function inspVolumeByClass() {
+  const records = (typeof INSPECTION_RECORDS !== "undefined") ? INSPECTION_RECORDS : [];
+  const classes = [...new Set(records.map(r => r.dataClassificationName || "未分类"))];
+  return classes.map(function(c) {
+    const rs = records.filter(r => (r.dataClassificationName || "未分类") === c);
+    return {
+      label: c,
+      should: rs.reduce(function(s, r) { return s + (Number(r.shouldCount) || 0); }, 0),
+      has: rs.reduce(function(s, r) { return s + (Number(r.hasCount) || 0); }, 0),
+      abnormal: rs.reduce(function(s, r) { return s + (r.status === "running" ? 0 : (Number(r.abnormalCount) || 0)); }, 0)
+    };
+  });
+}
+
+function renderInspVolChart() {
+  const ctx = document.getElementById("inspVolChart");
+  if (!ctx) return;
+  if (statsCharts.inspVol) statsCharts.inspVol.destroy();
+  const data = inspVolumeByClass();
+  statsCharts.inspVol = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: data.map(d => d.label),
+      datasets: [
+        { label: "应巡检数量", data: data.map(d => d.should), backgroundColor: "rgba(148,163,184,.65)", borderRadius: 6, barPercentage: .6 },
+        { label: "已巡检数量", data: data.map(d => d.has), backgroundColor: "rgba(30,64,175,.8)", borderRadius: 6, barPercentage: .6 },
+        { label: "异常数量", data: data.map(d => d.abnormal), backgroundColor: "rgba(220,38,38,.75)", borderRadius: 6, barPercentage: .6 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: "bottom", labels: { boxWidth: 10, usePointStyle: true } } },
+      scales: {
+        y: { beginAtZero: true, grid: { color: "#F1F5F9" }, ticks: { font: { family: "Fira Code", size: 10 }, color: "#94A3B8" } },
+        x: { grid: { display: false }, ticks: { font: { family: "Fira Code", size: 10 }, color: "#94A3B8" } }
+      }
+    }
+  });
+}
+
+/* ---- 保存趋势 / 档案门类分布（信息包数量 / 存储量两种统计方式） ---- */
+let statsMode = "count"; /* "count" | "storage" */
+
+function setStatsMode(mode, btn) {
+  statsMode = mode;
+  document.querySelectorAll(".stats-mode-btn").forEach(function(b) {
+    const active = b.getAttribute("data-mode") === mode;
+    b.classList.toggle("bg-slate-100", active);
+    b.classList.toggle("text-ink", active);
+    b.classList.toggle("text-slate-500", !active);
+  });
+  renderTrendChart();
+  renderDistChart();
+}
+
+function trendSeries() {
+  const count = statsMode === "count";
+  return {
+    label: count ? "信息包数量" : "存储量",
+    data: count ? TREND.count : TREND.storage,
+    color: count ? "#3B82F6" : "#1E40AF",
+    bg: count ? "rgba(59,130,246,.12)" : "rgba(30,64,175,.08)"
+  };
+}
+
+function renderTrendChart() {
+  const ctx = document.getElementById("trendChart");
+  if (!ctx) return;
+  if (statsCharts.trend) statsCharts.trend.destroy();
+  const s = trendSeries();
+  statsCharts.trend = new Chart(ctx, {
+    type: "line",
+    data: { labels: TREND.labels, datasets: [
+      { label: s.label, data: s.data, borderColor: s.color, backgroundColor: s.bg, fill: true, tension: .35, borderWidth: 2, pointRadius: 3, pointBackgroundColor: s.color }
+    ]},
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: "bottom", labels: { boxWidth: 10, usePointStyle: true } } },
+      scales: {
+        y: { grid: { color: "#F1F5F9" }, ticks: { font: { family: "Fira Code", size: 10 }, color: "#94A3B8" } },
+        x: { grid: { display: false }, ticks: { font: { family: "Fira Code", size: 10 }, color: "#94A3B8" } }
+      }
+    }
+  });
+}
+
+function renderDistChart() {
+  const ctx = document.getElementById("distChart");
+  if (!ctx) return;
+  if (statsCharts.dist) statsCharts.dist.destroy();
+  const count = statsMode === "count";
+  const vals = count ? TYPE_DIST.map(x => x.count) : TYPE_DIST.map(x => x.storage);
+  statsCharts.dist = new Chart(ctx, {
+    type: "doughnut",
+    data: { labels: TYPE_DIST.map(x => x.name), datasets: [{ data: vals, backgroundColor: TYPE_DIST.map(x => x.color), borderWidth: 0, hoverOffset: 6 }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: "68%", plugins: { legend: { position: "bottom", labels: { boxWidth: 10, usePointStyle: true, padding: 12 } } } }
+  });
 }
 
 function refreshStats() {
   toast("数据已刷新", "success");
+}
+
+/* ---- 统计表导出（Excel 兼容 CSV） ---- */
+function exportTrendExcel() {
+  const headers = ["月份", "信息包数量(个)", "存储量(TB)"];
+  const rows = TREND.labels.map(function(m, i) { return [m, TREND.count[i], TREND.storage[i]]; });
+  downloadTextFile("保存趋势统计表_" + exportNow().slice(0, 10) + ".csv", buildCSV(headers, rows));
+  toast("保存趋势统计表已导出", "success");
+}
+
+function exportDistExcel() {
+  const headers = ["档案门类", "信息包数量(个)", "存储量(TB)"];
+  const rows = TYPE_DIST.map(function(t) { return [t.name, t.count, t.storage]; });
+  downloadTextFile("档案门类分布统计表_" + exportNow().slice(0, 10) + ".csv", buildCSV(headers, rows));
+  toast("档案门类分布统计表已导出", "success");
 }

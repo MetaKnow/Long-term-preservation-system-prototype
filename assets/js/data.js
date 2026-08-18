@@ -1,23 +1,18 @@
-﻿/* ===== 长久保存系统 - 测试数据与菜单配置 ===== */
+/* ===== 长久保存系统 - 测试数据与菜单配置 ===== */
 
 /* 菜单结构（一级 + 二级） */
 const MENU = [
   { key: "dashboard", title: "工作台", icon: "layout-dashboard" },
-  { key: "data", title: "数据中心", icon: "database", children: [
+  { key: "data", title: "长保中心", icon: "database", children: [
     { key: "data-reception", title: "数据接收", icon: "download" },
     { key: "data-encapsulation", title: "数据装盘", icon: "package" },
-    { key: "data-outbound", title: "数据出库", icon: "upload-cloud" },
+    { key: "data-outbound", title: "出库记录", icon: "upload-cloud" },
   ]},
-  { key: "preserve-center", title: "长保中心", icon: "boxes", children: [
-    { key: "preserve-pkg", title: "长久保存信息包", icon: "archive" },
-    { key: "preserve-iso", title: "ISO包", icon: "disc" },
-  ]},
+  { key: "data-stats", title: "数据统计", icon: "bar-chart-3" },
   { key: "security", title: "安全中心", icon: "shield-check", children: [
     { key: "security-inspection", title: "数据巡检", icon: "search-check" },
     { key: "security-warning", title: "系统预警", icon: "alert-triangle" },
-    { key: "security-preserve", title: "数据保全", icon: "shield" },
   ]},
-  { key: "data-stats", title: "数据统计", icon: "bar-chart-3" },
   { key: "system-settings", title: "系统设置", icon: "settings-2", children: [
     { key: "biz-config", title: "业务配置", icon: "settings", children: [
       { key: "storage-manage", title: "存储管理", icon: "server" },
@@ -49,56 +44,34 @@ const CURRENT_USER = {
 const QUICK_ACCESS = [
   { key: "data-reception", title: "数据接收", icon: "download", tone: "primary" },
   { key: "data-encapsulation", title: "数据装盘", icon: "package", tone: "secondary" },
-  { key: "data-outbound", title: "数据出库", icon: "upload-cloud", tone: "accent" },
-  { key: "preserve-pkg", title: "长久保存信息包", icon: "archive", tone: "primary" },
-  { key: "preserve-iso", title: "ISO包", icon: "disc", tone: "secondary" },
+  { key: "data-outbound", title: "出库记录", icon: "upload-cloud", tone: "accent" },
 ];
 
 /* KPI 卡片 */
 const KPI = [
-  { label: "总保存数据量", value: "1,284,672", unit: "万条", delta: "+12.5%", up: true, icon: "database", tone: "primary" },
-  { label: "今日接收", value: "8,452", unit: "条", delta: "+5.2%", up: true, icon: "download", tone: "secondary" },
+  { label: "信息包总个数", value: "1,284", unit: "个", delta: "+8.2%", up: true, icon: "archive", tone: "primary" },
+  { label: "存储总量", value: "1,624", unit: "TB", delta: "+12.5%", up: true, icon: "database", tone: "secondary" },
   { label: "存储使用率", value: "68.4", unit: "%", delta: "+2.1%", up: true, icon: "hard-drive", tone: "accent" },
-  { label: "待处理预警", value: "7", unit: "项", delta: "-3", up: false, icon: "alert-triangle", tone: "danger" },
+  { label: "光盘使用状态", value: "128 / 32", unit: "张", delta: "+6 张", up: true, icon: "disc", tone: "danger" },
 ];
 
-/* 保存趋势（近 12 个月） */
+/* 保存趋势（近 12 个月，支持信息包数量 / 存储量两种统计） */
 const TREND = {
   labels: ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"],
-  receive: [42,48,55,51,60,66,70,74,69,78,82,88],
-  save:    [38,44,50,49,56,61,65,68,66,72,76,82],
+  count:   [42,48,55,51,60,66,70,74,69,78,82,88],
+  storage: [38.4,44.2,50.6,49.1,56.8,61.3,65.5,68.9,66.4,72.1,76.8,82.3],
 };
 
-/* 数据类型分布 */
+/* 档案门类分布（信息包数量 / 存储量） */
 const TYPE_DIST = [
-  { name: "文书档案", value: 486, color: "#1E40AF" },
-  { name: "声像档案", value: 232, color: "#3B82F6" },
-  { name: "科技档案", value: 198, color: "#60A5FA" },
-  { name: "电子文件", value: 246, color: "#F59E0B" },
-  { name: "其他", value: 122, color: "#94A3B8" },
+  { name: "文书档案", count: 486, storage: 412.6, color: "#1E40AF" },
+  { name: "声像档案", count: 232, storage: 523.8, color: "#3B82F6" },
+  { name: "科技档案", count: 198, storage: 301.2, color: "#60A5FA" },
+  { name: "电子文件", count: 246, storage: 218.4, color: "#F59E0B" },
+  { name: "其他", count: 122, storage: 168.0, color: "#94A3B8" },
 ];
 
-/* 存储池状态 */
-const STORAGE = [
-  { name: "主存储池", used: 462, total: 640, unit: "TB" },
-  { name: "备份存储池", used: 388, total: 640, unit: "TB" },
-  { name: "归档存储池", used: 521, total: 800, unit: "TB" },
-  { name: "异灾存储池", used: 196, total: 640, unit: "TB" },
-];
-
-/* 最近活动 */
-const ACTIVITIES = [
-  { time: "10:42", user: "张明", action: "接收", target: "2024年度文书档案（第3批）", type: "receive" },
-  { time: "10:15", user: "李华", action: "封装", target: "科研项目声像档案包 #A2087", type: "encapsulate" },
-  { time: "09:58", user: "系统", action: "备份", target: "主存储池增量备份完成", type: "backup" },
-  { time: "09:30", user: "王芳", action: "检测", target: "载体完整性检测（磁带库B）", type: "inspect" },
-  { time: "09:12", user: "赵磊", action: "预警", target: "归档存储池容量达 88%", type: "warn" },
-  { time: "08:50", user: "系统", action: "迁移", target: "冷数据迁移至归档池（1.2TB）", type: "migrate" },
-  { time: "08:20", user: "孙静", action: "恢复", target: "恢复请求 #RR-2231 已完成", type: "restore" },
-  { time: "昨日", user: "周强", action: "溯源", target: "档案 #D20240315 溯源链路校验", type: "trace" },
-];
-
-/* 预警列表 */
+/* 预警列表（顶栏消息提醒） */
 const ALERTS = [
   { level: "高", title: "归档存储池容量超过阈值", desc: "当前 88%，建议扩容或迁移冷数据", time: "09:12" },
   { level: "中", title: "磁带库B 出现读写重试", desc: "近 24 小时重试 12 次，请检查载体", time: "08:40" },

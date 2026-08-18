@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
@@ -59,10 +59,13 @@ tailwind.config = { theme: { extend: {
           <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
           <input class="field pl-9 pr-3 py-1.5 text-sm w-56" placeholder="搜索功能、档案…" />
         </div>
-        <button class="btn-ghost w-9 h-9 rounded-lg flex items-center justify-center relative">
-          <i data-lucide="bell" class="w-[18px] h-[18px]"></i>
-          <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-accent rounded-full pulse-dot"></span>
-        </button>
+        <div class="relative" id="notifWrap">
+          <button class="btn-ghost w-9 h-9 rounded-lg flex items-center justify-center relative" onclick="toggleNotifPanel(event)">
+            <i data-lucide="bell" class="w-[18px] h-[18px]"></i>
+            <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-accent rounded-full pulse-dot"></span>
+          </button>
+          <div id="notifPanel" class="hidden absolute right-0 top-full mt-2 w-96 bg-white rounded-xl shadow-xl border border-slate-100 z-50 overflow-hidden animate-fade-in"></div>
+        </div>
         <button class="btn-ghost w-9 h-9 rounded-lg flex items-center justify-center">
           <i data-lucide="settings" class="w-[18px] h-[18px]"></i>
         </button>
@@ -85,7 +88,7 @@ tailwind.config = { theme: { extend: {
 <script src="assets/js/data.js"></script>
 <script src="assets/js/reception.js"></script>
 <script src="assets/js/encapsulation.js"></script>
-<script src="assets/js/preserve.js"></script>
+<script src="assets/js/outbound.js"></script>
 <script src="assets/js/security.js"></script>
 <script src="assets/js/stats.js"></script>
 <script src="assets/js/settings.js"></script>

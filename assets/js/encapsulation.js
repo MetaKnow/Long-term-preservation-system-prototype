@@ -30,20 +30,15 @@ const ENCAPS_PACKAGES = [
 const PACK_STATUS = { running:"装盘中", failed:"装盘失败", succeed:"已装盘" };
 const PACK_STATUS_CLS = { running:"bg-blue-50 text-blue-700", failed:"bg-red-50 text-red-700", succeed:"bg-emerald-50 text-emerald-700" };
 
-let encFilter = { keyword: "", diskStatus: "", evidenceStatus: "" };
+let encFilter = { keyword: "", diskStatus: "" };
 let encSelected = new Set();
-
-function encEvidenceState(p) {
-  if (p.packageStatus !== "succeed") return { text: "-", cls: "text-slate-400", plain: true };
-  if (p.evidenceStatus === 1) return { text: "已存证", cls: "bg-emerald-50 text-emerald-700" };
-  return { text: "存证失败", cls: "bg-red-50 text-red-700" };
-}
 
 function encapsulationHTML() {
   return `
   <div class="p-4 space-y-3 animate-fade-in">
     <div class="flex items-center gap-2">
-      <button id="btnManualEvidence" onclick="manualEncEvidence()" class="btn-primary px-4 py-2 rounded-lg text-sm flex items-center gap-1.5 opacity-50 cursor-not-allowed" disabled><i data-lucide="shield-check" class="w-4 h-4"></i>手动存证</button>
+      <button id="btnEncExport" onclick="exportEncPkgs()" class="btn-ghost px-4 py-2 rounded-lg text-sm flex items-center gap-1.5 border border-slate-200 opacity-50 cursor-not-allowed" disabled><i data-lucide="download" class="w-4 h-4"></i>信息包导出</button>
+      <button id="btnDiscOutbound" onclick="discOutbound()" class="btn-ghost px-4 py-2 rounded-lg text-sm flex items-center gap-1.5 border border-slate-200 opacity-50 cursor-not-allowed" disabled><i data-lucide="disc-3" class="w-4 h-4"></i>光盘出库</button>
     </div>
     <div class="card overflow-hidden">
       <div class="flex flex-wrap items-center gap-3 p-4 border-b border-slate-100">
@@ -51,11 +46,6 @@ function encapsulationHTML() {
           <option value="">全部装盘状态</option>
           <option value="1" ${encFilter.diskStatus==="1"?'selected':''}>已装盘</option>
           <option value="0" ${encFilter.diskStatus==="0"?'selected':''}>未装盘</option>
-        </select>
-        <select class="field px-3 py-2 text-sm" onchange="encFilter.evidenceStatus=this.value; renderEncRows()">
-          <option value="">全部存证情况</option>
-          <option value="1" ${encFilter.evidenceStatus==="1"?'selected':''}>已存证</option>
-          <option value="0" ${encFilter.evidenceStatus==="0"?'selected':''}>未存证</option>
         </select>
         <div class="relative">
           <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
@@ -74,7 +64,6 @@ function encapsulationHTML() {
               <th class="px-3 py-2 font-medium">载体状态</th>
               <th class="px-3 py-2 font-medium">包大小</th>
               <th class="px-3 py-2 font-medium text-right">文件数量</th>
-              <th class="px-3 py-2 font-medium">存证情况</th>
               <th class="px-3 py-2 font-medium">创建时间</th>
               <th class="px-3 py-2 font-medium text-right">操作</th>
             </tr>
@@ -95,7 +84,6 @@ function encapsulationHTML() {
       </div>
     </div>
   </div>
-  ${encEvidenceModalHTML()}
   ${encDetailModalHTML()}`;
 }
 
@@ -117,8 +105,6 @@ function filteredEncPackages() {
     if (q && p.carrierNo.toLowerCase().indexOf(q) < 0) return false;
     if (encFilter.diskStatus === "1" && !p.carrierNo) return false;
     if (encFilter.diskStatus === "0" && p.carrierNo) return false;
-    if (encFilter.evidenceStatus === "1" && p.evidenceStatus !== 1) return false;
-    if (encFilter.evidenceStatus === "0" && p.evidenceStatus === 1) return false;
     return true;
   });
 }
@@ -130,7 +116,7 @@ function renderEncRows() {
   const info = document.getElementById("encInfo");
   if (!body) return;
   syncEncAll();
-  updateEncEvidenceBtn();
+  updateEncActionBtns();
   if (!list.length) {
     body.innerHTML = "";
     empty.classList.remove("hidden");
@@ -140,11 +126,8 @@ function renderEncRows() {
   }
   empty.classList.add("hidden");
   body.innerHTML = list.map((p, idx) => {
-    const ev = encEvidenceState(p);
-    const evBadge = ev.plain ? `<span class="${ev.cls}">${ev.text}</span>` : `<span class="tag ${ev.cls}">${ev.text}</span>`;
     const cs = encCarrierState(p);
     const cBadge = cs.plain ? `<span class="${cs.cls}">${cs.text}</span>` : `<span class="tag ${cs.cls}">${cs.text}</span>`;
-    const fullTag = p.fully === 1 ? `<span class="tag bg-slate-100 text-slate-500 ml-1">已满</span>` : (p.packageStatus === "succeed" ? `<span class="tag bg-amber-50 text-amber-700 ml-1">未满</span>` : ``);
     return `
     <tr class="border-b border-slate-50 hover:bg-slate-50/70 transition-colors">
       <td class="px-3 py-2 text-center text-xs text-slate-400 font-num">${idx + 1}</td>
@@ -152,15 +135,12 @@ function renderEncRows() {
       <td class="px-3 py-2 font-num text-xs text-slate-600 whitespace-nowrap">${p.carrierNo || "—"}</td>
       <td class="px-3 py-2 font-num text-xs text-slate-600 whitespace-nowrap">${p.carrierLocation || "-"}</td>
       <td class="px-3 py-2 whitespace-nowrap">${cBadge}</td>
-      <td class="px-3 py-2 font-num text-xs text-slate-600 whitespace-nowrap">${p.packageStatus === "running" ? "—" : formatFileUnit(p.packageSize)}${p.packageStatus === "running" ? "" : fullTag}</td>
+      <td class="px-3 py-2 font-num text-xs text-slate-600 whitespace-nowrap">${p.packageStatus === "running" ? "—" : formatFileUnit(p.packageSize)}</td>
       <td class="px-3 py-2 font-num text-xs text-slate-600 text-right whitespace-nowrap">${p.packageStatus === "running" ? "—" : p.fileCount.toLocaleString()}</td>
-      <td class="px-3 py-2">${evBadge}</td>
       <td class="px-3 py-2 font-num text-xs text-slate-600 whitespace-nowrap">${p.createdTime}</td>
       <td class="px-3 py-2">
         <div class="flex items-center gap-2 justify-end text-xs whitespace-nowrap">
           <button onclick="openEncDetail('${p.id}')" class="text-secondary hover:text-primary">数据明细</button>
-          <span class="text-slate-200">|</span>
-          <button onclick="openEncEvidence('${p.id}')" class="text-slate-500 hover:text-ink">存证报告</button>
           ${p.packageStatus === "failed" ? `<span class="text-slate-200">|</span><button onclick="encRepack('${p.id}')" class="text-amber-600 hover:text-amber-700">重新装盘</button>` : ``}
         </div>
       </td>
@@ -174,7 +154,7 @@ function renderEncRows() {
 function toggleEncSelect(id, checked) {
   if (checked) encSelected.add(id); else encSelected.delete(id);
   syncEncAll();
-  updateEncEvidenceBtn();
+  updateEncActionBtns();
 }
 function toggleEncSelectAll(checked) {
   filteredEncPackages().forEach(function(p) {
@@ -189,38 +169,64 @@ function syncEncAll() {
   all.checked = list.length > 0 && list.every(function(p) { return encSelected.has(p.id); });
 }
 
-/* 已装盘且未存证的记录可手动存证 */
-function encEvidenceEligible(p) {
-  return p.packageStatus === "succeed" && p.evidenceStatus !== 1;
+/* 已装盘且在库（盘匣未拿出）的记录可出库 */
+function encOutboundEligible(p) {
+  return p.packageStatus === "succeed" && !!p.carrierNo && p.carrierStatus !== "盘匣被拿出";
 }
 
-function updateEncEvidenceBtn() {
-  const btn = document.getElementById("btnManualEvidence");
-  if (!btn) return;
+function updateEncActionBtns() {
+  const btnExport = document.getElementById("btnEncExport");
+  const btnOutbound = document.getElementById("btnDiscOutbound");
   const list = filteredEncPackages();
   const selected = list.filter(p => encSelected.has(p.id));
-  const allEligible = selected.length > 0 && selected.every(encEvidenceEligible);
-  if (allEligible) {
-    btn.disabled = false;
-    btn.classList.remove("opacity-50", "cursor-not-allowed");
-  } else {
-    btn.disabled = true;
-    btn.classList.add("opacity-50", "cursor-not-allowed");
+  if (btnExport) {
+    if (selected.length > 0) {
+      btnExport.disabled = false;
+      btnExport.classList.remove("opacity-50", "cursor-not-allowed");
+    } else {
+      btnExport.disabled = true;
+      btnExport.classList.add("opacity-50", "cursor-not-allowed");
+    }
+  }
+  if (btnOutbound) {
+    const allOutbound = selected.length > 0 && selected.every(encOutboundEligible);
+    if (allOutbound) {
+      btnOutbound.disabled = false;
+      btnOutbound.classList.remove("opacity-50", "cursor-not-allowed");
+    } else {
+      btnOutbound.disabled = true;
+      btnOutbound.classList.add("opacity-50", "cursor-not-allowed");
+    }
   }
 }
 
-function manualEncEvidence() {
+/* ---- 信息包导出 ---- */
+function encPkgRows(p) {
+  return [p.carrierNo || "", p.carrierLocation || "-", p.carrierStatus || "-", p.packageName, p.packageSize, p.fileCount, p.createdTime];
+}
+
+function exportEncPkgs() {
   const list = filteredEncPackages();
-  const items = list.filter(p => encSelected.has(p.id) && encEvidenceEligible(p));
-  if (!items.length) { toast("请先勾选已装盘且未存证的记录", "warn"); return; }
+  const items = list.filter(p => encSelected.has(p.id));
+  if (!items.length) { toast("请先勾选要导出的装盘记录", "warn"); return; }
+  if (!confirm("确认导出选中的 " + items.length + " 条装盘记录？将生成信息包导出清单文件（CSV）。")) return;
+  const headers = ["载体编号", "载体位置", "载体状态", "包名称", "包大小(字节)", "文件数量", "创建时间"];
+  downloadTextFile("装盘信息包导出清单_" + exportNow().slice(0, 10) + ".csv", buildCSV(headers, items.map(encPkgRows)));
+  toast("已导出装盘信息包导出清单，共 " + items.length + " 条", "success");
+}
+
+/* ---- 光盘出库 ---- */
+function discOutbound() {
+  const list = filteredEncPackages();
+  const items = list.filter(p => encSelected.has(p.id) && encOutboundEligible(p));
+  if (!items.length) { toast("请先勾选已装盘且在库（未出库）的光盘", "warn"); return; }
+  if (!confirm("确认将选中的 " + items.length + " 张光盘出库？出库后载体状态将变更为「盘匣被拿出」，并生成出库记录。")) return;
   items.forEach(p => {
-    p.evidenceStatus = 1;
-    if (!p.fileKey) p.fileKey = "FK-" + Math.random().toString(16).slice(2, 14).toUpperCase();
-    if (!p.evidenceCode) p.evidenceCode = (Math.random().toString(16).slice(2) + Math.random().toString(16).slice(2)).slice(0, 64).padEnd(64, "0");
-    p.evidenceSize = p.packageSize;
-    p.evidenceTime = encNow();
+    p.carrierStatus = "盘匣被拿出";
+    p.outboundTime = encNow();
   });
-  toast("已手动完成存证，共 " + items.length + " 条", "success");
+  if (typeof addOutboundRecord === "function") addOutboundRecord(items);
+  toast("光盘已出库，共 " + items.length + " 张，出库记录已生成", "success");
   encSelected.clear();
   renderEncRows();
 }
@@ -232,7 +238,7 @@ function refreshEncapsulation() {
   lucide.createIcons();
   renderEncRows();
 }
-function resetEncFilter() { encFilter = { keyword: "", diskStatus: "", evidenceStatus: "" }; refreshEncapsulation(); }
+function resetEncFilter() { encFilter = { keyword: "", diskStatus: "" }; refreshEncapsulation(); }
 
 function encRepack(id) {
   const p = ENCAPS_PACKAGES.find(function(x) { return x.id === id; });
@@ -251,79 +257,6 @@ function encRepack(id) {
     q.evidenceTime = encNow();
     if (location.hash.indexOf("data-encapsulation") >= 0) { refreshEncapsulation(); toast("重新装盘完成：" + id, "success"); }
   }, 2500);
-}
-
-/* ---- 存证报告 ---- */
-function encEvidenceModalHTML() {
-  return `
-  <div id="encEvModal" class="hidden fixed inset-0 z-50 items-center justify-center p-4">
-    <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="closeEncEvidence()"></div>
-    <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[88vh] flex flex-col animate-fade-in">
-      <div class="flex items-center justify-between px-5 py-3 border-b border-slate-100">
-        <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center"><i data-lucide="shield-check" class="w-5 h-5 text-primary"></i></div>
-          <h3 class="text-sm font-semibold text-ink">存证报告</h3>
-        </div>
-        <button onclick="closeEncEvidence()" class="btn-ghost w-8 h-8 rounded-lg flex items-center justify-center"><i data-lucide="x" class="w-4 h-4"></i></button>
-      </div>
-      <div class="overflow-y-auto px-5 py-4" id="encEvBody"></div>
-      <div class="flex items-center justify-end gap-2 px-5 py-2.5 border-t border-slate-100 bg-slate-50/50 rounded-b-2xl">
-        <button onclick="toast('打印任务已创建','success')" class="btn-ghost px-3.5 py-2 rounded-lg text-sm flex items-center gap-1.5 border border-slate-200"><i data-lucide="printer" class="w-3.5 h-3.5"></i>打印</button>
-        <button onclick="toast('报告下载已开始','success')" class="btn-ghost px-3.5 py-2 rounded-lg text-sm flex items-center gap-1.5 border border-slate-200"><i data-lucide="download" class="w-3.5 h-3.5"></i>下载</button>
-        <button onclick="closeEncEvidence()" class="btn-primary px-4 py-2 rounded-lg text-sm">关闭</button>
-      </div>
-    </div>
-  </div>`;
-}
-
-function encEvidenceBodyHTML(p) {
-  const deposited = p.packageStatus === "succeed" && p.evidenceStatus === 1;
-  if (!deposited) {
-    return `
-    <div class="text-center py-10">
-      <div class="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4"><i data-lucide="shield-x" class="w-7 h-7 text-slate-400"></i></div>
-      <div class="text-sm font-medium text-slate-600">该装盘尚未完成存证</div>
-      <div class="text-xs text-slate-400 mt-1">装盘完成并完成存证后可查看存证报告</div>
-    </div>`;
-  }
-  return `
-  <div class="text-center mb-5 pb-4 border-b border-dashed border-slate-200">
-    <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 border-2 border-primary/20 mb-2"><i data-lucide="shield-check" class="w-6 h-6 text-primary"></i></div>
-    <div class="text-lg font-semibold text-ink">存证报告</div>
-    <div class="text-xs text-slate-400">Evidence Preservation Report</div>
-  </div>
-  <div class="space-y-4 mb-5">
-    ${evKV("唯一标识", '<span class="font-num">' + (p.fileKey || p.id) + '</span>')}
-    ${evKV("包名称", p.packageName)}
-    <div>
-      <div class="text-xs text-slate-400 mb-1">存证哈希</div>
-      <div class="flex items-center gap-2 bg-slate-50 border border-slate-100 rounded-lg px-3 py-2.5">
-        <code class="font-num text-xs text-slate-700 break-all flex-1">${p.evidenceCode}</code>
-        <button onclick="copyText('${p.evidenceCode}')" class="text-slate-400 hover:text-primary shrink-0"><i data-lucide="copy" class="w-4 h-4"></i></button>
-      </div>
-    </div>
-    <div class="grid grid-cols-2 gap-x-6">
-      ${evKV("存证大小", '<span class="font-num">' + formatFileUnit(p.evidenceSize) + '</span>')}
-      ${evKV("存证时间", '<span class="font-num">' + p.evidenceTime + '</span>')}
-    </div>
-  </div>
-  <div class="rounded-lg bg-blue-50/60 border border-blue-100 px-4 py-3 text-xs text-slate-600 leading-relaxed flex gap-2">
-    <i data-lucide="info" class="w-4 h-4 text-primary shrink-0 mt-0.5"></i>
-    <span>此报告证明业务数据已按照其关联的存证数据结构在保全中心进行存证，以保证其完整性和不可篡改性。</span>
-  </div>`;
-}
-
-function openEncEvidence(id) {
-  const p = ENCAPS_PACKAGES.find(function(x) { return x.id === id; });
-  if (!p) return;
-  document.getElementById("encEvBody").innerHTML = encEvidenceBodyHTML(p);
-  const m = document.getElementById("encEvModal");
-  m.classList.remove("hidden"); m.classList.add("flex");
-  lucide.createIcons();
-}
-function closeEncEvidence() {
-  const m = document.getElementById("encEvModal");
-  m.classList.add("hidden"); m.classList.remove("flex");
 }
 
 /* ---- 数据明细 ---- */

@@ -41,6 +41,7 @@ function receptionHTML() {
     <div class="flex items-center gap-2">
       <button id="btnManualCheck" onclick="manualCheckEvidence()" class="btn-primary px-4 py-2 rounded-lg text-sm flex items-center gap-1.5 opacity-50 cursor-not-allowed" disabled><i data-lucide="shield-check" class="w-4 h-4"></i>手动检测存证</button>
       <button id="btnReturnArchives" onclick="returnToArchives()" class="btn-ghost px-4 py-2 rounded-lg text-sm flex items-center gap-1.5 border border-slate-200 opacity-50 cursor-not-allowed" disabled><i data-lucide="undo-2" class="w-4 h-4"></i>退回馆藏系统</button>
+      <button id="btnExportPkg" onclick="exportReceptionPkgs()" class="btn-ghost px-4 py-2 rounded-lg text-sm flex items-center gap-1.5 border border-slate-200 opacity-50 cursor-not-allowed" disabled><i data-lucide="download" class="w-4 h-4"></i>信息包导出</button>
     </div>
     <div class="card p-3">
       <div class="flex flex-wrap items-center gap-3">
@@ -83,7 +84,6 @@ function receptionHTML() {
               <th class="px-3 py-2 font-medium">档案门类</th>
               <th class="px-3 py-2 font-medium">档号</th>
               <th class="px-3 py-2 font-medium">信息包名称</th>
-              <th class="px-3 py-2 font-medium">版本号</th>
               <th class="px-3 py-2 font-medium">载体编号</th>
               <th class="px-3 py-2 font-medium">登记时间</th>
               <th class="px-3 py-2 font-medium text-center">四性检测</th>
@@ -153,8 +153,7 @@ function renderPackageRows() {
       <td class="px-3 py-2 text-sm text-slate-600 whitespace-nowrap">${p.fondsName}</td>
       <td class="px-3 py-2 text-sm text-slate-600 whitespace-nowrap">${p.typeName}</td>
       <td class="px-3 py-2 font-num text-xs text-slate-600 whitespace-nowrap">${p.archivesArchivalCode}</td>
-      <td class="px-3 py-2 text-sm text-ink font-medium max-w-[260px] truncate" title="${p.archivesArchivalCode}-${p.packageVersion}">${p.archivesArchivalCode}-${p.packageVersion}</td>
-      <td class="px-3 py-2 font-num text-xs text-slate-600 whitespace-nowrap">${p.packageVersion}</td>
+      <td class="px-3 py-2 text-sm text-ink font-medium max-w-[260px] truncate" title="${p.archivesArchivalCode}.zip">${p.archivesArchivalCode}.zip</td>
       <td class="px-3 py-2 font-num text-xs text-slate-600 whitespace-nowrap">${p.carrierNo || "—"}</td>
       <td class="px-3 py-2 font-num text-xs text-slate-600 whitespace-nowrap">${p.createdTime}</td>
       <td class="px-3 py-2 text-center">${chkBadge}</td>
@@ -197,6 +196,16 @@ function updateActionBtns() {
     } else {
       btn2.disabled = true;
       btn2.classList.add("opacity-50", "cursor-not-allowed");
+    }
+  }
+  const btn3 = document.getElementById("btnExportPkg");
+  if (btn3) {
+    if (selected.length > 0) {
+      btn3.disabled = false;
+      btn3.classList.remove("opacity-50", "cursor-not-allowed");
+    } else {
+      btn3.disabled = true;
+      btn3.classList.add("opacity-50", "cursor-not-allowed");
     }
   }
 }
@@ -256,6 +265,51 @@ function returnToArchives() {
   if (!items.length) { toast("请先勾选四性检测未通过的信息包", "warn"); return; }
   if (!confirm("确认将选中的 " + items.length + " 条四性检测未通过的信息包退回馆藏系统？")) return;
   toast("已退回馆藏系统，共 " + items.length + " 条", "success");
+}
+
+/* ---- 信息包导出（通用工具，数据装盘页复用） ---- */
+function exportNow() {
+  const d = new Date(), p = function(n) { return String(n).padStart(2, "0"); };
+  return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+}
+
+function csvCell(v) {
+  v = String(v == null ? "" : v);
+  return /[",\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+}
+
+function buildCSV(headers, rows) {
+  return [headers].concat(rows).map(function(r) { return r.map(csvCell).join(","); }).join("\r\n");
+}
+
+function downloadTextFile(filename, content) {
+  const blob = new Blob(["\uFEFF" + content], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function receptionPkgRows(p) {
+  const chk = p.checkStatus === "1" ? "通过" : "未通过";
+  const ev = evidenceState(p);
+  const evText = ev.plain ? "-" : ev.text;
+  return [p.fondsCode, p.fondsName, p.typeName, p.archivesArchivalCode, p.archivesArchivalCode + ".zip", p.packageSize, p.carrierNo || "", p.createdTime, chk, evText, p.evidenceCode || ""];
+}
+
+function exportReceptionPkgs() {
+  const list = filteredPackages();
+  const items = list.filter(p => receptionSelected.has(p.id));
+  if (!items.length) { toast("请先勾选要导出的信息包", "warn"); return; }
+  if (!confirm("确认导出选中的 " + items.length + " 个信息包？将生成信息包导出清单文件（CSV）。")) return;
+  const headers = ["全宗号", "全宗名称", "档案门类", "档号", "信息包名称", "包大小(字节)", "载体编号", "登记时间", "四性检测", "存证情况", "存证哈希"];
+  const rows = items.map(receptionPkgRows);
+  downloadTextFile("信息包导出清单_" + exportNow().slice(0, 10) + ".csv", buildCSV(headers, rows));
+  toast("已导出信息包导出清单，共 " + items.length + " 个", "success");
 }
 
 /* ---- 存证证明 ---- */
